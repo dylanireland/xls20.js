@@ -81,14 +81,14 @@ async function mint(client, wallet) {
   const tx = await client.submitAndWait(jsontx, { wallet: wallet })
 
   const nfts = await client.request({
-		method: "account_nfts",
-		account: wallet.address
-	})
-	console.log(nfts)
+	method: "account_nfts",
+	account: wallet.address
+  })
+  console.log(nfts)
 
-	// Check transaction results -------------------------------------------------
-	console.log("Transaction result:", tx.result.meta.TransactionResult)
-	console.log("Balance changes:", JSON.stringify(xrpl.getBalanceChanges(tx.result.meta), null, 2))
+  // Check transaction results -------------------------------------------------
+  console.log("Transaction result:", tx.result.meta.TransactionResult)
+  console.log("Balance changes:", JSON.stringify(xrpl.getBalanceChanges(tx.result.meta), null, 2))
 }
 
 main(process.argv)
