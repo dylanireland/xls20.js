@@ -4,7 +4,7 @@ This script was written to test the minting of NFTs on the XRPL XLS-20 devnet. T
 
 The entire source will be available upon [Xdragons](https://xdragons.io) mint.
 
-View the results of this script's execution live at [xdragons.io/test/nft](https://xdragons.io/test)
+View the results of this script's execution live at [xdragons.io/test](https://xdragons.io/test)
 
 ## Install
 
