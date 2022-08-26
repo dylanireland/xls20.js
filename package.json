@@ -1,0 +1,17 @@
+{
+  "name": "xls20-mint",
+  "version": "0.5.0",
+  "description": "XRPL interaction script for minting XLS-20 tokens. Built for Xdragons",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Dylan Ireland",
+  "license": "ISC",
+  "keywords": [
+    "XLS20"
+  ],
+  "dependencies": {
+    "xrpl": "^2.3.1"
+  }
+}
