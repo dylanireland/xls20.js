@@ -1,48 +1,88 @@
 const xrpl = require("xrpl")
 
-async function main() {
+async function main(args) {
 
-  // Define the network client
+  if (args.length < 3) {
+    throw new Error("Please provide args")
+  }
+
+  // This generates a random wallet, use fromSeed or check out the other Wallet methods here: https://js.xrpl.org/classes/Wallet.html
+  const wallet = xrpl.Wallet.generate()
+
   const client = new xrpl.Client("wss://xls20-sandbox.rippletest.net:51233")
   await client.connect()
 
-  const test_wallet = xrpl.Wallet.fromSeed("snJnHefN7hCbTCmu8TPYDFzvvZe7S")
-  //Seq # 3261361
-  //console.log(await fundWallet(client, test_wallet))
+  if (args.length == 4) {
+    if (args[3] == "fund") {
+      try {
+        console.log(await fundWallet(client, wallet))
+      } catch(error) {
+        throw new Error(error)
+      }
+    } else {
+      throw new Error("Invalid 2nd argument")
+    }
+  }
 
-  const response = await client.request({
-    "command": "account_info",
-    "account": test_wallet.address,
-    "ledger_index": "validated"
-  })
+  if (args[2] == "mint") {
+    try {
+      console.log(await mint(client, wallet))
+    } catch(error) {
+      throw new Error(error)
+    }
+  } else if (args[2] == "account_info") {
+    try {
+      console.log(await getAccountInfo(client, wallet.address))
+    } catch(error) {
+      throw new Error(error)
+    }
+  } else {
+    throw new Error("Incorrect argument")
+  }
 
-  console.log(response)
-  await mint(client, test_wallet)
-
-  // Disconnect when done (If you omit this, Node.js won't end the process)
+  console.log("Exiting successfully... Goodbye!")
   client.disconnect()
 }
 
-async function fundWallet(client, wallet) {
-  const result = await client.fundWallet(wallet)
-  return result
+async function getAccountInfo(client, walletAddress) {
+  return new Promise((resolve, reject) => {
+    client.request({
+        "command": "account_info",
+        "account": walletAddress,
+        "ledger_index": "validated"
+      }).then((response) => {
+        resolve(response)
+      }).catch((error) => {
+        reject(error)
+      })
+  })
 }
 
-async function mint(client, test_wallet) {
+async function fundWallet(client, wallet) {
+  return new Promise((resolve, reject) => {
+    client.fundWallet(wallet).then((response) => {
+      resolve(response)
+    }).catch((error) => {
+      reject(error)
+    })
+  })
+}
+
+async function mint(client, wallet) {
   var jsontx = {
     "TransactionType": "NFTokenMint",
-    "Account": test_wallet.classicAddress,
-    "TransferFee": 5000,
+    "Account": wallet.classicAddress,
+    "TransferFee": 5000, // 5% transfer fee
     "NFTokenTaxon": 0,
     "Flags": 9, //Burnable and transferable
     "URI": xrpl.convertStringToHex("https://xdragons.io/static/photos/testassets/1.png"),
   }
 
-  const tx = await client.submitAndWait(jsontx, { wallet: test_wallet })
+  const tx = await client.submitAndWait(jsontx, { wallet: wallet })
 
   const nfts = await client.request({
 		method: "account_nfts",
-		account: test_wallet.address
+		account: wallet.address
 	})
 	console.log(nfts)
 
@@ -51,4 +91,4 @@ async function mint(client, test_wallet) {
 	console.log("Balance changes:", JSON.stringify(xrpl.getBalanceChanges(tx.result.meta), null, 2))
 }
 
-main()
+main(process.argv)
