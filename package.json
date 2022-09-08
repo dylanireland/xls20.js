@@ -12,6 +12,7 @@
     "XLS20"
   ],
   "dependencies": {
+    "dotenv": "^16.0.2",
     "xrpl": "^2.3.1"
   }
 }

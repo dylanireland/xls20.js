@@ -23,23 +23,73 @@ npm install
 
 ## Execute
 
-This script utilizes command line arguments to perform different tasks
+This script utilizes command line arguments and environment variables to perform different tasks.
 
-By default, the script will generate a random wallet on the fly, so you will need to fund it each time by passing "fund" as the second argument
+If you'd like to use your own wallet, insert the seed into the file *.env* as `SEED=YOUR_SEED`.
 
-The first argument should be "mint" or "account_info"
+### Generate
 
-Example:
-
-```bash
-node index.js mint fund
-```
-
-or
+If you'd like to generate a new wallet, run:
 
 ```bash
-node index.js account_info fund
+node index.js generate
 ```
 
-By changing [line 10](./index.js#L10) to `xrpl.Wallet.fromSeed` or any of the other [key derivation methods](https://js.xrpl.org/classes/Wallet.html) you may use a prefunded account and omit the "fund" argument
+Then copy the value and paste it in your *.env* file as mentioned above.
+
+### Fund
+
+To fund your account with test XRP, run:
+
+```bash
+node index.js fund
+```
+
+*Note: This will not work on the XRPL mainnet*
+
+### Mint
+
+To mint an NFT with the data in the `mint` function, run:
+
+```bash
+node index.js mint
+```
+
+### Account Info
+
+To get the info of your XRPL account, run:
+
+```bash
+node index.js account_info
+```
+
+### Account Specific NFT Info
+
+To get the NFT info of your XRPL account, run:
+
+```bash
+node index.js account_nfts
+```
+
+### Create Whitelist Sale Offer
+
+In order to support a whitelist sale mechanism, we need to create sell offers to each of the whitelisters.
+
+Achieve this by running:
+
+```bash
+node index.js create_whitelist_sell_offer WHITELISTER_PUBLIC_KEY
+```
+
+Replace `WHITELISTER_PUBLIC_KEY` with the whitelister's public key.
+
+### Create Transient Public Key
+
+Create a new temporary wallet and fund it and return the public key.
+
+```bash
+node index.js transient_pubkey
+```
+
+
 

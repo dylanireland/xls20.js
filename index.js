@@ -1,30 +1,85 @@
 const xrpl = require("xrpl")
+require('dotenv').config()
 
 async function main(args) {
 
   if (args.length < 3) {
-    throw new Error("Please provide args")
+    throw new Error("Please provide args. Run 'node index.js help' for help.")
+  } else if (args.length > 4) {
+    throw new Error("Too many arguments")
   }
 
-  // This generates a random wallet, use fromSeed or check out the other Wallet methods here: https://js.xrpl.org/classes/Wallet.html
-  const wallet = xrpl.Wallet.generate()
+  if (args[2] == "help") {
+    if (args.length == 4) {
+      switch (args[3]) {
+        case "generate":
+          console.log("To generate a new wallet and retrieve the corresponding seed, run 'node index.js generate'.")
+          console.log("From there, place your seed in the .env file in this directory.")
+          break
+        case "fund":
+          console.log("Once you generate a seed and place it in .env, run 'node index.js fund' to fund the wallet.")
+          console.log("See: 'node index.js help generate'.")
+          break
+        case "mint":
+          console.log("To mint an NFT with the data in the mint() function, run 'node index.js mint'.")
+          break
+        case "account_info":
+          console.log("To get info on the account of the wallet derived from the seed in .env, run 'node index.js account_info'")
+          break
+        case "account_nfts":
+          console.log("Run 'node index.js account_info' to get a list of the nfts owned by an account")
+          break
+        case "create_whitelist_sell_offer":
+          console.log("Run 'node index.js create_whitelist_sell_offer DESTINATION' where DESTINATION is the public key of another XRPL account to create a private sell offer to that account")
+          break
+        default:
+          throw new Error("Invalid help page")
+      }
+    } else {
+      console.log("Available help commands are:")
+      console.log("node index.js help generate")
+      console.log("node index.js help fund")
+      console.log("node index.js help mint")
+      console.log("node index.js help account_info")
+      console.log("node index.js help account_nfts")
+      console.log("node index.js help create_whitelist_sell_offer")
+      console.log("node index.js help transient_pubkey")
+    }
+    return
+  }
+  
+  var wallet
 
-  const client = new xrpl.Client("wss://xls20-sandbox.rippletest.net:51233")
+  if (process.env.SEED != null) {
+    try {
+      wallet = xrpl.Wallet.fromSeed(process.env.SEED)
+    } catch {
+      throw new Error("Could not parse seed. Is your SEED environment variable a valid seed?")
+    }
+  }
+  
+
+  const client = new xrpl.Client("wss://s.devnet.rippletest.net:51233")
   await client.connect()
 
-  if (args.length == 4) {
-    if (args[3] == "fund") {
+
+  if (args[2] == "generate") {
+    wallet = xrpl.Wallet.generate()
+    console.log(`A new wallet has been generated for you with the seed ${wallet.seed}`)
+    console.log(`Please copy the following line into the .env file within this directory to use this wallet`)
+    console.log(`SEED=${wallet.seed}`)
+  } else if (args[2] == "fund") {
+    if (process.env.SEED != null) {
+      // Have already done SEED validation at this point
       try {
         console.log(await fundWallet(client, wallet))
       } catch(error) {
         throw new Error(error)
       }
     } else {
-      throw new Error("Invalid 2nd argument")
+      throw new Error("No wallet to fund")
     }
-  }
-
-  if (args[2] == "mint") {
+  } else if (args[2] == "mint") {
     try {
       console.log(await mint(client, wallet))
     } catch(error) {
@@ -36,12 +91,46 @@ async function main(args) {
     } catch(error) {
       throw new Error(error)
     }
+  } else if (args[2] == "account_nfts") {
+    try {
+      console.log(await getAccountNFTs(client, wallet.address))
+    } catch(error) {
+      throw new Error(error)
+    }
+  } else if (args[2] == "create_whitelist_sell_offer") {
+    try {
+      console.log(await createWhitelistSellOfferFor(args[3], client, wallet))
+    } catch(error) {
+      throw new Error(error)
+    }
+  } else if (args[2] == "transient_pubkey") {
+    try {
+      console.log(await createFundGetPubkey(client))
+    } catch(error) {
+      throw new Error(error)
+    }
   } else {
     throw new Error("Incorrect argument")
   }
 
   console.log("Exiting successfully... Goodbye!")
   client.disconnect()
+}
+
+async function getLedgerVersion(client) {
+  // XRPL uses ledger versions and a tx will fail if the LastLedgerSequence provided with the transaction becomes outdated. Due to the high speed of block throughput,
+  // with WebSockets our tx often becomes outdated. For this reason, we give a reasonable buffer of 4 (specified 'reasonable' by XRPL).
+  // See https://xrpl.org/reliable-transaction-submission.html#lastledgersequence
+  // This is wrong^ But this can actually be useful like potentially using this to await the activation of XLS-20 and deploy immediately.
+  return new Promise((resolve, reject) => {
+    client.request({
+        "command": "ledger_current",
+      }).then((response) => {
+        resolve(response.result.ledger_current_index)
+      }).catch((error) => {
+        reject(error)
+      })
+  })
 }
 
 async function getAccountInfo(client, walletAddress) {
@@ -58,6 +147,19 @@ async function getAccountInfo(client, walletAddress) {
   })
 }
 
+async function getAccountNFTs(client, walletAddress) {
+  return new Promise((resolve, reject) => {
+    client.request({
+      method: "account_nfts",
+      account: walletAddress
+    }).then((nfts) => {
+      resolve(nfts.result.account_nfts)
+    }).catch((error) => {
+      reject(error)
+    })
+  })
+}
+
 async function fundWallet(client, wallet) {
   return new Promise((resolve, reject) => {
     client.fundWallet(wallet).then((response) => {
@@ -66,6 +168,12 @@ async function fundWallet(client, wallet) {
       reject(error)
     })
   })
+}
+
+async function createFundGetPubkey(client) {
+  const wallet = xrpl.Wallet.generate()
+  await fundWallet(client, wallet)
+  return wallet.classicAddress
 }
 
 async function mint(client, wallet) {
@@ -80,15 +188,39 @@ async function mint(client, wallet) {
 
   const tx = await client.submitAndWait(jsontx, { wallet: wallet })
 
-  const nfts = await client.request({
-		method: "account_nfts",
-		account: wallet.address
-	})
-	console.log(nfts)
+  printTxResults(tx)
 
-	// Check transaction results -------------------------------------------------
-	console.log("Transaction result:", tx.result.meta.TransactionResult)
-	console.log("Balance changes:", JSON.stringify(xrpl.getBalanceChanges(tx.result.meta), null, 2))
+	
+}
+
+async function createWhitelistSellOfferFor(destination, client, wallet) {
+  const jsontx = {
+    "TransactionType": "NFTokenCreateOffer",
+    "NFTokenID": "000913885B1B4434ABDBC12F864FB3FECED7ADBA5A6E58E616E5DA9C00000001",
+    "Amount": "1000000", // 1 XRP
+    "Flags": 1,
+    "Account": wallet.classicAddress, // Us, the minter
+    //"Destination": destination, // A whitelister,
+    //"LastLedgerSequence": 6000000 //(await getLedgerVersion(client)) + 20, // "Reasonable buffer of 4 ledger versions"
+  }
+
+  let tx
+
+  try {
+    tx = await client.submitAndWait(jsontx, { wallet: wallet })
+  } catch(error) {
+    console.log(error)
+    return
+  }
+  
+
+  console.log(tx)
+}
+
+function printTxResults(tx) {
+  // Check transaction results -------------------------------------------------
+  console.log("Transaction result:", tx.result.meta.TransactionResult)
+  console.log("Balance changes:", JSON.stringify(xrpl.getBalanceChanges(tx.result.meta), null, 2))
 }
 
 main(process.argv)
