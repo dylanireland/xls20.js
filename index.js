@@ -17,7 +17,7 @@ async function main(args) {
           console.log("From there, place your seed in the .env file in this directory.")
           break
         case "fund":
-          console.log("Once you generate a seed and place it in .env, run 'node index.js fund' to fund the wallet.")
+          console.log("Once you generate a seed and place it in .env, run 'node index.js fund SEED' to fund the wallet. If you'd like to fund the buyer wallet, run 'node index.js fund BUYER'.")
           console.log("See: 'node index.js help generate'.")
           break
         case "mint":
@@ -32,6 +32,10 @@ async function main(args) {
         case "create_whitelist_sell_offer":
           console.log("Run 'node index.js create_whitelist_sell_offer DESTINATION' where DESTINATION is the public key of another XRPL account to create a private sell offer to that account")
           break
+        case "accept_sell_offer":
+          console.log("Run 'node index.js accept_sell_offer OFFER_HASH' where OFFER_HASH is the Hash256 of the TokenSellOffer. This command will require that BUYER is set in .env")
+          console.log("See: 'node index.js generate'.")
+          break
         default:
           throw new Error("Invalid help page")
       }
@@ -43,18 +47,27 @@ async function main(args) {
       console.log("node index.js help account_info")
       console.log("node index.js help account_nfts")
       console.log("node index.js help create_whitelist_sell_offer")
+      console.log("node index.js help accept_sell_offer")
       console.log("node index.js help transient_pubkey")
     }
     return
   }
   
-  var wallet
+  var wallet, buyer
 
   if (process.env.SEED != null) {
     try {
       wallet = xrpl.Wallet.fromSeed(process.env.SEED)
     } catch {
       throw new Error("Could not parse seed. Is your SEED environment variable a valid seed?")
+    }
+  }
+
+  if (process.env.BUYER != null) {
+    try {
+      buyer = xrpl.Wallet.fromSeed(process.env.BUYER)
+    } catch {
+      throw new Error("Could not parse buyer seed. Is your BUYER environment variable a valid seed?")
     }
   }
   
@@ -68,17 +81,37 @@ async function main(args) {
     console.log(`A new wallet has been generated for you with the seed ${wallet.seed}`)
     console.log(`Please copy the following line into the .env file within this directory to use this wallet`)
     console.log(`SEED=${wallet.seed}`)
+    console.log(`If instead you'd like to use this as the hypothetical 'buyer' address, place the following in .env`)
+    console.log(`BUYER=${wallet.seed}`)
   } else if (args[2] == "fund") {
-    if (process.env.SEED != null) {
-      // Have already done SEED validation at this point
-      try {
-        console.log(await fundWallet(client, wallet))
-      } catch(error) {
-        throw new Error(error)
+    if (args.length < 4) {
+      throw new Error("Please specify SEED or BUYER")
+    }
+    if (args[3].toLowerCase() == "seed") {
+      if (process.env.SEED != null) {
+        // Have already done SEED validation at this point
+        try {
+          console.log(await fundWallet(client, wallet))
+        } catch(error) {
+          throw new Error(error)
+        }
+      } else {
+        throw new Error("No wallet to fund")
+      }
+    } else if (args[3].toLowerCase() == "buyer") {
+      if (process.env.BUYER != null) {
+        try {
+          console.log(await fundWallet(client, buyer))
+        } catch(error) {
+          throw new Error(error)
+        }
+      } else {
+        throw new Error("No wallet to fund")
       }
     } else {
-      throw new Error("No wallet to fund")
+      throw new Error("Please use SEED or BUYER for the last argument. See `node index.js help fund`")
     }
+    
   } else if (args[2] == "mint") {
     try {
       console.log(await mint(client, wallet))
@@ -100,6 +133,12 @@ async function main(args) {
   } else if (args[2] == "create_whitelist_sell_offer") {
     try {
       console.log(await createWhitelistSellOfferFor(args[3], client, wallet))
+    } catch(error) {
+      throw new Error(error)
+    }
+  } else if (args[2] == "accept_sell_offer") {
+    try {
+      console.log(await acceptSellOffer(args[3], client, buyer, wallet))
     } catch(error) {
       throw new Error(error)
     }
@@ -198,16 +237,39 @@ async function createWhitelistSellOfferFor(destination, client, wallet) {
     "TransactionType": "NFTokenCreateOffer",
     "NFTokenID": "000913885B1B4434ABDBC12F864FB3FECED7ADBA5A6E58E616E5DA9C00000001",
     "Amount": "1000000", // 1 XRP
-    "Flags": 1,
     "Account": wallet.classicAddress, // Us, the minter
-    //"Destination": destination, // A whitelister,
-    //"LastLedgerSequence": 6000000 //(await getLedgerVersion(client)) + 20, // "Reasonable buffer of 4 ledger versions"
+    "Flags": 1,
   }
 
   let tx
 
   try {
     tx = await client.submitAndWait(jsontx, { wallet: wallet })
+  } catch(error) {
+    console.log(error)
+    return
+  }
+  
+
+  console.log(tx.result)
+  console.log(tx.result.meta.AffectedNodes)
+}
+
+async function acceptSellOffer(token, client, buyer, wallet) {
+  if (buyer == null) {
+    throw new Error("Please specify the BUYER in .env. See 'node index.js generate.")
+  }
+
+  const jsontx = {
+    "TransactionType": "NFTokenAcceptOffer",
+    "NFTokenSellOffer": token,
+    "Account": buyer.classicAddress, // The buyer
+  }
+
+  let tx
+
+  try {
+    tx = await client.submitAndWait(jsontx, { wallet: buyer })
   } catch(error) {
     console.log(error)
     return
