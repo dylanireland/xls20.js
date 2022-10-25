@@ -66,7 +66,7 @@ console.log(await xls20.fundWallet())
 
 Response:
 
-```json
+```
 {
   wallet: Wallet {
     publicKey: 'ED1899DC4EAB06FBD32DF013094B230E225CDA8772A47DA4911E0068E5DC7B6B05',
@@ -90,7 +90,7 @@ console.log(mintResponse)
 
 Response:
 
-```json
+```
 {
   id: 15,
   result: {
@@ -122,7 +122,7 @@ console.log(await xls20.createSellOffer(nfTokenID, salePrice))
 
 Response:
 
-```json
+```
 {
   id: 17,
   result: {
