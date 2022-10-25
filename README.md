@@ -2,6 +2,8 @@
 
 xls20.js is an SDK that can be used to interact with [XLS-20 NFTs](https://github.com/XRPLF/XRPL-Standards/discussions/46) and supports all currently available [NFToken transaction types](https://xrpl.org/known-amendments.html#nonfungibletokensv1).
 
+xls20.js was built by the [Xdragons](https://xdragons.io) team in order to interact with Xdragon NFTs, however this SDK can be used to interact with any XLS-20 NFT(s).
+
 ## Install
 
 To install, clone the repository
