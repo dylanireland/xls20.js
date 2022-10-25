@@ -1,16 +1,17 @@
 {
-  "name": "xls20.js",
-  "version": "1.0",
+  "name": "xls20",
+  "version": "0.9.4",
   "description": "JavaScript SDK for XLS-20 NFT interaction on the XRP Ledger",
-  "main": "index.js",
+  "main": "xls20.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Dylan Ireland",
-  "license": "ISC",
+  "license": "Apache 2.0",
   "keywords": [
-    "XLS20"
+    "XLS20",
+    "XLS-20"
   ],
-  "type": "module",
   "dependencies": {
     "xrpl": "^2.3.1"
   }

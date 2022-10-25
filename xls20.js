@@ -1,4 +1,4 @@
-import xrpl from "xrpl";
+const xrpl = require("xrpl");
 
 /**
  * The XLS20 Class is used to interact with XLS20 NFTs on the XRPL. To use XLS20.js, use `import XLS20 from 'xls20`.
@@ -6,7 +6,7 @@ import xrpl from "xrpl";
  * 
  * @author Dylan Ireland <dylan.ireland777@gmail.com>
  */
-export default class XLS20 {
+class XLS20 {
   /**
    * Constructs a new XLS20 object
    * 
@@ -156,6 +156,11 @@ export default class XLS20 {
       account = this.wallet.classicAddress;
     }
 
+    salePrice = salePrice.toString();
+    if (salePrice.includes("_")) {
+      salePrice = salePrice.replace("_", "");
+    }
+
     var jsontx = {
       "TransactionType": "NFTokenCreateOffer",
       "NFTokenID": nfTokenID,
@@ -188,6 +193,11 @@ export default class XLS20 {
 
     if (account == null) {
       account = this.wallet.classicAddress;
+    }
+
+    salePrice = salePrice.toString();
+    if (salePrice.includes("_")) {
+      salePrice = salePrice.replace("_", "");
     }
 
     var jsontx = {
@@ -223,6 +233,11 @@ export default class XLS20 {
 
     if (account == null) {
       account = this.wallet.classicAddress;
+    }
+
+    purchasePrice = purchasePrice.toString();
+    if (purchasePrice.includes("_")) {
+      purchasePrice = purchasePrice.replace("_", "");
     }
 
     var jsontx = {
@@ -392,3 +407,5 @@ export default class XLS20 {
     return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 }
+
+module.exports = XLS20;
