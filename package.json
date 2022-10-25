@@ -11,6 +11,7 @@
   "keywords": [
     "XLS20"
   ],
+  "type": "module",
   "dependencies": {
     "dotenv": "^16.0.2",
     "xrpl": "^2.3.1"

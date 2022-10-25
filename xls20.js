@@ -1,4 +1,4 @@
-const xrpl = require("xrpl");
+import xrpl from "xrpl";
 
 /**
  * The XLS20 Class is used to interact with XLS20 NFTs on the XRPL. To use XLS20.js, use `import XLS20 from 'xls20`.
@@ -6,22 +6,27 @@ const xrpl = require("xrpl");
  * 
  * @author Dylan Ireland <dylan.ireland777@gmail.com>
  */
-export class XLS20 {
+export default class XLS20 {
   /**
    * Constructs a new XLS20 object
    * 
    * @constructor
-   * @param {string} walletSeed - The seed of the wallet used to deploy transactions.
    * @param {string} network - The network with which to deploy transactions. Options are "Devnet"
+   * @param {string=} walletSeed - The seed of the wallet used to deploy transactions. If not provided, one will be generated.
    */
-  constructor(walletSeed, network) {
-    this.wallet = xrpl.Wallet.fromSeed(walletSeed);
+  constructor(network, walletSeed) {
+    if (walletSeed) {
+      this.wallet = xrpl.Wallet.fromSeed(walletSeed);
+    } else {
+      this.generateWallet();
+    }
+    
     switch (network) {
-      case "Devnet": this.network = { "Devnet": "wss://s.devnet.rippletest.net:51233" }; break;
+      case "Devnet": this.network = ["Devnet", "wss://s.devnet.rippletest.net:51233"]; break;
       default: throw new Error("Invalid Network. Options are \"Devnet\"");
     }
-    this.client = new xrpl.Client(this.network);
-    this.client.connect();
+
+    this.client = new xrpl.Client(this.network[1]);
   }
 
   /**
@@ -31,14 +36,14 @@ export class XLS20 {
    * ```
    * const xls20 = new XLS20(walletSeed, network);
    * try {
-   *  await xls20.awaitConnection();
+   *  await xls20.connect();
    * } catch(error) {
    *  // handle error
    * }
    * // Use `xls20`...
    * ```
    */
-  async awaitConnection() {
+  async connect() {
     try {
       await this.client.connect();
     } catch(error) {
@@ -61,10 +66,10 @@ export class XLS20 {
    */
   fundWallet() {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
-    if (!("Devnet" in this.network)) {
+    if (this.network[0] != "Devnet") {
       throw new Error("This function only works on testnets and devnets");
     }
     return this.client.fundWallet(this.wallet);
@@ -77,10 +82,10 @@ export class XLS20 {
    */
   getAccountInfo() {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
-    return client.request({
+    return this.client.request({
       "command": "account_info",
       "account": this.wallet.classicAddress,
       "ledger_index": "validated"
@@ -94,10 +99,10 @@ export class XLS20 {
    */
   getAccountNFTs(client, walletAddress) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
-    return client.request({
+    return this.client.request({
       method: "account_nfts",
       account: walletAddress
     });
@@ -109,12 +114,12 @@ export class XLS20 {
    * @param {string} transferFee - The fee applied when the NFT is transferred, in tenths of a basis point (i.e. 5000 == 5%).
    * @param {number} flags - The flags to be applied to the NFT.
    * @param {string} uri - The URI of the metadata associated with the NFT.
-   * @param {string=} receiverAddress - The XRPL account that the NFT should be minted to. If not provided, `this.wallet.classicAddress` is used.
+   * @param {string=} account - The XRPL account minting the NFT. If not provided, `this.wallet.classicAddress` is used.
    * @returns {Promise} A `Promise` that resolves to a successful execution result, or rejects with an error.
    */
-  mint(transferFee, flags, uri, receiverAddress) {
+  mint(transferFee, flags, uri, account) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -123,14 +128,14 @@ export class XLS20 {
 
     var jsontx = {
       "TransactionType": "NFTokenMint",
-      "Account": receiverAddress,
+      "Account": account,
       "TransferFee": transferFee, // In 10ths of a basis-point. i.e. 5000 == 5%
       "NFTokenTaxon": 0,
       "Flags": flags, //Burnable and transferable is 9
       "URI": xrpl.convertStringToHex(uri),
     }
   
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -138,14 +143,13 @@ export class XLS20 {
    * 
    * @param {string} nfTokenID - The NFTokenID of the NFT to create the NFTokenSellOffer for.
    * @param {number} salePrice - The sale price in [drops](https://xrpl.org/currency-formats.html#xrp-amounts).
-   * @param {string} destination - The XRPL account that is permitted to take the NFTokenSellOffer
    * @param {string=} account - The XRPL account the NFT resides in. If not provided, `this.wallet.classicAddress` is used.
    * @param {number=} expiration - The expiration date of the NFTokenSellOffer in seconds since the Ripple Epoch. If not provided, no expiration date is set.
    * @returns {Promise} A `Promise` that resolves to a successful execution result, or rejects with an error.
    */
-  createWhitelistSellOffer(nfTokenID, salePrice, destination, account, expiration) {
+   createSellOffer(nfTokenID, salePrice, account, expiration) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -160,15 +164,46 @@ export class XLS20 {
       "Flags": 1,
     }
 
-    if (destination != null) {
-      jsontx["Destination"] = destination;
+    if (expiration != null) {
+      jsontx["Expiration"] = expiration;
+    }
+
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
+  }
+
+  /**
+   * Creates and deploys an NFTokenSellOffer
+   * 
+   * @param {string} nfTokenID - The NFTokenID of the NFT to create the NFTokenSellOffer for.
+   * @param {number} salePrice - The sale price in [drops](https://xrpl.org/currency-formats.html#xrp-amounts).
+   * @param {string} destination - The XRPL account that is permitted to take the NFTokenSellOffer
+   * @param {string=} account - The XRPL account the NFT resides in. If not provided, `this.wallet.classicAddress` is used.
+   * @param {number=} expiration - The expiration date of the NFTokenSellOffer in seconds since the Ripple Epoch. If not provided, no expiration date is set.
+   * @returns {Promise} A `Promise` that resolves to a successful execution result, or rejects with an error.
+   */
+  createWhitelistSellOffer(nfTokenID, salePrice, destination, account, expiration) {
+    if (!this.client.isConnected()) {
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
+    }
+
+    if (account == null) {
+      account = this.wallet.classicAddress;
+    }
+
+    var jsontx = {
+      "TransactionType": "NFTokenCreateOffer",
+      "NFTokenID": nfTokenID,
+      "Amount": salePrice,
+      "Account": account,
+      "Destination": destination,
+      "Flags": 1,
     }
 
     if (expiration != null) {
       jsontx["Expiration"] = expiration;
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -183,7 +218,7 @@ export class XLS20 {
    */
    createBuyOffer(nfTokenID, purchasePrice, account, expiration) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -202,7 +237,7 @@ export class XLS20 {
       jsontx["Expiration"] = expiration;
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -215,7 +250,7 @@ export class XLS20 {
    */
    acceptBuyOffer(nfTokenBuyOffer, account) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -228,7 +263,7 @@ export class XLS20 {
       "Account": account,
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -241,7 +276,7 @@ export class XLS20 {
    */
    acceptSellOffer(nfTokenSellOffer, account) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -254,7 +289,7 @@ export class XLS20 {
       "Account": account,
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -269,7 +304,7 @@ export class XLS20 {
    */
    brokerNFTSale(nfTokenBuyOffer, nfTokenSellOffer, brokerFee, account) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -287,7 +322,7 @@ export class XLS20 {
       jsontx["NFTokenBrokerFee"] = brokerFee;
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -303,7 +338,7 @@ export class XLS20 {
    */
    burn(nfTokenID, account, owner) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (account == null) {
@@ -318,12 +353,12 @@ export class XLS20 {
 
     if (owner != null) {
       if (owner == account) {
-        throw new Error("Illegal duplicate assignment to `owner` and `account`. Please use different values or omit `owner`");
+        throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
       }
       jsontx["Owner"] = owner;
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 
   /**
@@ -337,7 +372,7 @@ export class XLS20 {
    */
    cancelOffers(nfTokenOffers, account) {
     if (!this.client.isConnected()) {
-      throw new Error("Client is not connected to the network. If you'd like to await connection, see `awaitConnection()`");
+      throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
     if (!Array.isArray(nfTokenOffers)) {
@@ -354,6 +389,6 @@ export class XLS20 {
       "Account": account,
     }
 
-    return client.submitAndWait(jsontx, { wallet: this.wallet })
+    return this.client.submitAndWait(jsontx, { wallet: this.wallet })
   }
 }
