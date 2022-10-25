@@ -17,6 +17,7 @@
     "XLS-20"
   ],
   "dependencies": {
+    "clean-jsdoc-theme": "^4.1.8",
     "xrpl": "^2.3.1"
   }
 }

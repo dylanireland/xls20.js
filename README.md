@@ -31,7 +31,7 @@ npm install
 
 Documentation is written in the source and displayed using [JSDoc](https://jsdoc.app/).
 
-Read the reference documentation [here]().
+Read the reference documentation [here](https://xdragons.io/xls20js/reference).
 
 ## Example Usage
 
@@ -145,7 +145,7 @@ Response:
 
 ### More
 
-It does more, [read the docs](docs)!
+It does more, [read the docs](https://xdragons.io/xls20js/reference)!
 
 ## Dependencies
 

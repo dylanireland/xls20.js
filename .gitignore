@@ -3,3 +3,4 @@ node_modules/
 !.gitignore
 index.js
 run.js
+out/
