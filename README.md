@@ -88,6 +88,7 @@ console.log(await xls20.mint(transferFee, flags, uri));
  * },
  * type: 'response'
  * }
+ */
 ```
 
 *Note: The juicy stuff is in `result.meta.AffectedNodes`*
