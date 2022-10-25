@@ -1,18 +1,14 @@
-# XLS-20 Minting Script
+# xls20.js
 
-This script was written to test the minting of NFTs on the XRPL XLS-20 devnet. This script is being build out behind the scenes to handle the mint of Xdragons on the XRPL.
-
-The entire source will be available upon [Xdragons](https://xdragons.io) mint.
-
-View the results of this script's execution live at [xdragons.io/test](https://xdragons.io/test)
+xls20.js is an SDK that can be used to interact with [XLS-20 NFTs](https://github.com/XRPLF/XRPL-Standards/discussions/46) and supports all currently available [NFToken transaction types](https://xrpl.org/known-amendments.html#nonfungibletokensv1).
 
 ## Install
 
 To install, clone the repository
 
 ```bash
-git clone https://github.com/dylanireland/xls20-mint-js.git
-cd xls20-mint-js/
+git clone https://github.com/dylanireland/xls20.js.git
+cd xls20.js/
 ```
 
 Then install `npm` packages
@@ -21,75 +17,12 @@ Then install `npm` packages
 npm install
 ```
 
-## Execute
+## Documentation
 
-This script utilizes command line arguments and environment variables to perform different tasks.
+Documentation is written in the source and displayed using [JSDoc](https://jsdoc.app/).
 
-If you'd like to use your own wallet, insert the seed into the file *.env* as `SEED=YOUR_SEED`.
+Read the reference documentation [here]().
 
-### Generate
+## Dependencies
 
-If you'd like to generate a new wallet, run:
-
-```bash
-node index.js generate
-```
-
-Then copy the value and paste it in your *.env* file as mentioned above.
-
-### Fund
-
-To fund your account with test XRP, run:
-
-```bash
-node index.js fund
-```
-
-*Note: This will not work on the XRPL mainnet*
-
-### Mint
-
-To mint an NFT with the data in the `mint` function, run:
-
-```bash
-node index.js mint
-```
-
-### Account Info
-
-To get the info of your XRPL account, run:
-
-```bash
-node index.js account_info
-```
-
-### Account Specific NFT Info
-
-To get the NFT info of your XRPL account, run:
-
-```bash
-node index.js account_nfts
-```
-
-### Create Whitelist Sale Offer
-
-In order to support a whitelist sale mechanism, we need to create sell offers to each of the whitelisters.
-
-Achieve this by running:
-
-```bash
-node index.js create_whitelist_sell_offer WHITELISTER_PUBLIC_KEY
-```
-
-Replace `WHITELISTER_PUBLIC_KEY` with the whitelister's public key.
-
-### Create Transient Public Key
-
-Create a new temporary wallet and fund it and return the public key.
-
-```bash
-node index.js transient_pubkey
-```
-
-
-
+This SDK depends only on [xrpl.js](https://github.com/XRPLF/xrpl.js/).
