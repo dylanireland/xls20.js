@@ -6,6 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dylanireland/xls20.js.git"
+  },
   "author": "Dylan Ireland",
   "license": "Apache 2.0",
   "keywords": [
