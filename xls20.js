@@ -98,7 +98,7 @@ class XLS20 {
    * 
    * @returns {Promise} A `Promise` that resolves to a successful query, or rejects with an error.
    */
-  getAccountNFTs(client, walletAddress) {
+  getAccountNFTs(walletAddress) {
     if (!this.client.isConnected()) {
       throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
