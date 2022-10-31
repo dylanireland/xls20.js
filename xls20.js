@@ -23,7 +23,8 @@ class XLS20 {
     
     switch (network) {
       case "Devnet": this.network = ["Devnet", "wss://s.devnet.rippletest.net:51233"]; break;
-      default: throw new Error("Invalid Network. Options are \"Devnet\"");
+      case "Mainnet": this.network = ["Mainnet", "wss://xrplcluster.com/"]; break;
+      default: this.network = ["Custom", network]; break;
     }
 
     this.client = new xrpl.Client(this.network[1]);
