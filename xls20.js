@@ -94,19 +94,39 @@ class XLS20 {
   }
   
   /**
-   * Gets the NFTs owned by this instance's `wallet`.
+   * Gets the NFTs owned by `walletAddress`
    * 
+   * @param {string=} walletAddress The wallet address to get the NFTs for, defaults to `this.wallet.classicAddress`
+   * @param {number=} limit The limit on the number of token pages to retrieve. Cannot be fewer than 32 nor more than 400. Default value is 100
+   * @param {Marker=} marker The value from a previous paginated response, allowing you to continue querying where you left off past the 400 limit. Markers are ephemeral and may not last more than 10 minutes.
    * @returns {Promise} A `Promise` that resolves to a successful query, or rejects with an error.
    */
-  getAccountNFTs(walletAddress) {
+  getAccountNFTs(walletAddress, limit, marker) {
     if (!this.client.isConnected()) {
       throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
 
-    return this.client.request({
+    if (walletAddress == null) {
+      walletAddress = this.wallet.classicAddress
+    }
+
+    if (limit == null) {
+      limit = 100
+    } else if (limit > 400 || limit < 32) {
+      throw new Error("Limit is out of bounds. Please use a value between 32 and 400")
+    }
+
+    let req = {
       method: "account_nfts",
-      account: walletAddress
-    });
+      account: walletAddress,
+      limit: limit
+    }
+
+    if (marker != null) {
+      req.marker = marker
+    }
+
+    return this.client.request(req);
   }
 
   /**
