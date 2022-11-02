@@ -159,12 +159,13 @@ class XLS20 {
    * Creates and deploys an NFTokenMint transaction
    * 
    * @param {string} transferFee - The fee applied when the NFT is transferred, in tenths of a basis point (i.e. 5000 == 5%).
-   * @param {number} flags - The flags to be applied to the NFT.
    * @param {string} uri - The URI of the metadata associated with the NFT.
+   * @param {number=} flags - The flags to be applied to the NFT. If not provided, a `0` flag will be set.
+   * @param {number=} taxon - The token taxon of the NFT. NFTs of the same taxon are in the same "collection".
    * @param {string=} account - The XRPL account minting the NFT. If not provided, `this.wallet.classicAddress` is used.
    * @returns {Promise} A `Promise` that resolves to a successful execution result, or rejects with an error.
    */
-  mint(transferFee, flags, uri, account) {
+  mint(transferFee, uri, flags, taxon, account) {
     if (!this.client.isConnected()) {
       throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
     }
@@ -173,11 +174,19 @@ class XLS20 {
       account = this.wallet.classicAddress;
     }
 
+    if (flags == null) {
+      flags = 0
+    }
+
+    if (taxon == null) {
+      taxon = 0
+    }
+
     var jsontx = {
       "TransactionType": "NFTokenMint",
       "Account": account,
       "TransferFee": transferFee, // In 10ths of a basis-point. i.e. 5000 == 5%
-      "NFTokenTaxon": 0,
+      "NFTokenTaxon": taxon,
       "Flags": flags, //Burnable and transferable is 9
       "URI": xrpl.convertStringToHex(uri),
     }
@@ -415,7 +424,7 @@ class XLS20 {
 
     if (owner != null) {
       if (owner == account) {
-        throw new Error("Client is not connected to the network. Please run `xls20.connect()` before making requests.");
+        throw new Error("Owner == Account. Please omit `owner` from the query");
       }
       jsontx["Owner"] = owner;
     }
