@@ -130,6 +130,32 @@ class XLS20 {
   }
 
   /**
+   * Gets the NFTs owned by `walletAddress`
+   * 
+   * @param {string=} walletAddress The wallet address to get the NFTs for, defaults to `this.wallet.classicAddress`
+   * @returns {Array} An array containing all of the accounts NFTs
+   */
+  async getAllAccountNFTs(walletAddress) {
+    let tmp = []
+    let firstRun = true
+    let marker = null
+    while (true) {
+      firstRun = false
+      const response = await this.getAccountNFTs(walletAddress, 400, marker)
+      const nfts = response.result.account_nfts
+      if (nfts.length == 0) {
+        break
+      }
+      tmp = tmp.concat(nfts)
+      if (nfts.length < 200) {
+        break
+      }
+      marker = response.result.marker
+    }
+    return tmp
+  }
+
+  /**
    * Creates and deploys an NFTokenMint transaction
    * 
    * @param {string} transferFee - The fee applied when the NFT is transferred, in tenths of a basis point (i.e. 5000 == 5%).

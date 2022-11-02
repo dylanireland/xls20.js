@@ -1,6 +1,6 @@
 {
   "name": "xls20",
-  "version": "0.9.8",
+  "version": "0.9.81",
   "description": "JavaScript SDK for XLS-20 NFT interaction on the XRP Ledger",
   "main": "xls20.js",
   "scripts": {
