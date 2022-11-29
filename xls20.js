@@ -399,7 +399,7 @@ class XLS20 {
   /**
    * Burns an NFT
    * 
-   * @param {string} nfTokenID - The Hash256 of the NFTokenBuyOffer.
+   * @param {string} nfTokenID - The NFTokenID of the NFT.
    * @param {string=} account - The account making the request??. If not provided, `this.wallet.classicAddress` is used.
    * @param {string=} owner - The owner of the NFToken to burn. Not required if the owner is the same as the account deploying the transaction.
    * 
@@ -430,6 +430,23 @@ class XLS20 {
     }
 
     return this.client.submitAndWait(jsontx, { wallet: this.wallet })
+  }
+
+  /**
+   * Get's the sell offers of an NFT given the NFTokenID
+   * 
+   * @param {string} nfTokenID The NFTokenID of the NFT
+   * @param {string=} account - The account making the request??. If not provided, `this.wallet.classicAddress` is used.
+   * 
+   * @returns {Promise} A `Promise` that resolves to a successful execution result, or rejects with an error.
+   */
+  getSellOffers(nfTokenID) {
+    const req = {
+      method: "nft_sell_offers",
+      nft_id: nfTokenID
+    }
+
+    return this.client.request(req)
   }
 
   /**
