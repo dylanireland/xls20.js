@@ -1,6 +1,6 @@
 # xls20.js
 
-xls20.js is an API that can be used to interact with [XLS-20 NFTs](https://github.com/XRPLF/XRPL-Standards/discussions/46) and supports all currently available [NFToken transaction types](https://xrpl.org/known-amendments.html#nonfungibletokensv1).
+xls20.js is a JavaScript library that can be used to interact with [XLS-20 NFTs](https://github.com/XRPLF/XRPL-Standards/discussions/46) and supports all currently available [NFToken transaction types](https://xrpl.org/known-amendments.html#nonfungibletokensv1).
 
 ## Install
 
@@ -12,16 +12,11 @@ npm install xls20
 
 ### From Source
 
-Or build from source
+Or reference from source
 
 ```bash
 git clone https://github.com/dylanireland/xls20.js.git
 cd xls20.js/
-```
-
-Then install `npm` packages
-
-```bash
 npm install
 ```
 
